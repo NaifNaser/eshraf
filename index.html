@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>إشراف المدرسة</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F2439">
+<link rel="icon" href="img/logo.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="إشراف">
+<link rel="stylesheet" href="css/eshraf.css?v=1">
+</head>
+<body>
+<div class="netbar" id="netbar" hidden></div>
+<header class="hd">
+  <div class="wrap">
+    <a class="brand" href="#/"><img src="img/logo-cream.svg" alt=""><div><h1>إشراف المدرسة</h1><div class="sub" id="hdSchool">متابعةُ الطلاب: الحضورُ والغيابُ والمخالفاتُ والتعهّدات</div></div></a>
+    <div class="date" id="hdDate"></div>
+    <div class="user" id="hdUser"></div>
+  </div>
+</header>
+<nav class="tabs" aria-label="أقسامُ المنصّة"><div class="wrap" id="tabs">
+  <a href="#/" data-r=""><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z"/></svg>اليوم</a>
+  <a href="#/late" data-r="late"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>الطابورُ الصباحي</a>
+  <a href="#/absent" data-r="absent"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M8 3v4M16 3v4M9.5 15l1.8 1.8L15 13"/></svg>الغياب</a>
+  <a href="#/students" data-r="students"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M14.5 19a4.5 4.5 0 0 1 7 -3.5"/></svg>الطلابُ والفصول</a>
+  <a href="#/reports" data-r="reports"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 16V9M12 16V5M17 16v-6"/></svg>التقارير</a>
+  <a href="#/log" data-r="log"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>السجل</a>
+  <a href="#/settings" data-r="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg>الإعدادات</a>
+</div></nav>
+<main><div class="wrap" id="view"><div class="loading"><span class="spin"></span></div></div></main>
+<footer id="foot">إشراف المدرسة — البياناتُ محفوظةٌ في حسابِ المشرفِ وحدَه</footer>
+<div class="print-foot" id="printFoot">إشراف المدرسة</div>
+<nav class="bnav" id="bnav" aria-label="التنقّل السفلي">
+  <a href="#/" data-r=""><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z"/></svg><span>اليوم</span></a>
+  <a href="#/late" data-r="late"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>الطابور</span></a>
+  <a href="#/absent" data-r="absent"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M8 3v4M16 3v4M9.5 15l1.8 1.8L15 13"/></svg><span>الغياب</span></a>
+  <a href="#/students" data-r="students"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M14.5 19a4.5 4.5 0 0 1 7 -3.5"/></svg><span>الطلاب</span></a>
+  <a href="#/reports" data-r="reports"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 16V9M12 16V5M17 16v-6"/></svg><span>التقارير</span></a>
+</nav>
+<div class="sheet-bg" id="sheetBg" hidden></div>
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true"></div>
+<div class="toast" id="toast"></div>
+<script src="js/config.js?v=1"></script>
+<script src="js/fb.js?v=1"></script>
+<script src="js/charts.js?v=1"></script>
+<script src="js/app.js?v=1"></script>
+</body>
+</html>
