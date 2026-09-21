@@ -1,14 +1,14 @@
 {
   "name": "إشراف المدرسة",
   "short_name": "إشراف",
-  "description": "متابعة الطلاب: التأخير والغياب والمرضيات والنوم والمخالفات والتعهدات",
+  "description": "متابعة الطلاب: التأخير والغياب والاستدعاءات والنوم والمخالفات والتعهدات",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "./index.html#/",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#F7F4EC",
-  "theme_color": "#0F2439",
+  "background_color": "#FBF6EC",
+  "theme_color": "#2E1C0D",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }

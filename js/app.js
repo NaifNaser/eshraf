@@ -338,7 +338,7 @@
     });
   }
   function reportHead(title, sub) {
-    return '<div class="report-head"><div class="rt"><h2>' + esc(title) + '</h2><p>' + esc(S.settings.school) + (sub ? ' · ' + esc(sub) : '') + '</p></div><div class="rd">' + esc(S.settings.supervisor) + '<br>' + fmtDate(today(), true) + '</div><img src="img/logo.svg" alt=""></div>';
+    return '<div class="report-head"><div class="rt"><h2>' + esc(title) + '</h2><p>' + esc(S.settings.school) + (sub ? ' · ' + esc(sub) : '') + '</p></div><div class="rd">' + esc(S.settings.supervisor) + '<br>' + fmtDate(today(), true) + '</div><img src="img/logo.png" alt=""></div>';
   }
 
   /* ---------------- اختيارُ طالب ---------------- */
@@ -455,7 +455,7 @@
 
   /* ---------------- الدخول ---------------- */
   function loginView() {
-    view.innerHTML = '<div class="login"><img src="img/logo.svg" alt=""><h2>إشراف المدرسة</h2><p>ادخلْ بحسابِ المشرفِ لتصلَ إلى سجلّاتِ الطلاب</p>'
+    view.innerHTML = '<div class="login"><img src="img/logo.png" alt=""><h2>إشراف المدرسة</h2><p>ادخلْ بحسابِ المشرفِ لتصلَ إلى سجلّاتِ الطلاب</p>'
       + '<div id="lerr"></div>'
       + '<div class="field"><label>البريدُ الإلكتروني</label><input id="lemail" type="email" autocomplete="username" value="' + esc(LS.get('es_last_email', FB.admins[0] || '')) + '"></div>'
       + '<div class="field"><label>كلمةُ المرور</label><input id="lpw" type="password" autocomplete="current-password"></div>'
@@ -825,7 +825,7 @@
     if (!ev) throw new Error('التعهّدُ غيرُ موجود');
     var r = periodRange(), cnt = countBy(evsIn(r.from, r.to, function (e) { return e.sid === st.s.id; }));
     view.innerHTML = '<div class="crumb noprint"><a href="#/student/' + st.c._id + '/' + st.s.id + '">' + esc(st.s.name) + '</a><span class="sep">›</span>ورقةُ التعهّد</div><div class="ttl noprint"><div><h2>ورقةُ التعهّد</h2></div><div class="acts"><button class="btn p" onclick="window.print()">' + ICO.print + ' طباعة</button></div></div>'
-      + '<div class="doc"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><b>' + esc(S.settings.school) + '</b><br><small class="muted">الإشرافُ العام — ' + esc(S.settings.supervisor) + '</small></div><img src="img/logo.svg" style="height:56px"></div>'
+      + '<div class="doc"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><b>' + esc(S.settings.school) + '</b><br><small class="muted">الإشرافُ العام — ' + esc(S.settings.supervisor) + '</small></div><img src="img/logo.png" style="height:56px"></div>'
       + '<h2>تعهّدٌ خطّي</h2>'
       + '<div class="kv"><b>اسمُ الطالب:</b><span>' + esc(st.s.name) + '</span><b>الفصل:</b><span>' + esc(st.c.name) + '</span><b>التاريخ:</b><span>' + fmtDate(date, true) + ' — ' + esc(hijri(pd(date))) + '</span><b>الموضوع:</b><span>' + esc(ev.kind || '—') + '</span></div>'
       + '<div class="txt">' + nl(ev.text || S.settings.pledgeText) + (ev.note ? '\n\n' + nl(ev.note) : '') + '</div>'
@@ -844,7 +844,7 @@
     var txt = 'السلامُ عليكم ورحمةُ اللهِ وبركاته\nوليَّ أمرِ الطالبِ ' + st.s.name + ' — ' + st.c.name + '\nنفيدُكم بأنّ سجلَّ ابنِكم خلالَ ' + r.label + ' تضمّنَ ما يلي:\n' + (lines.length ? lines.map(function (l) { return '• ' + l; }).join('\n') : '• لا ملاحظاتَ تُذكَر — ونشكرُ التزامَه') + '\nونأملُ التكرّمَ بمتابعتِه' + (lines.length ? ' ومراجعةِ الإشرافِ التربويِّ عند الحاجة' : '') + '.\n' + S.settings.supervisor + ' — ' + S.settings.school;
     view.innerHTML = '<div class="crumb noprint"><a href="#/student/' + st.c._id + '/' + st.s.id + '">' + esc(st.s.name) + '</a><span class="sep">›</span>خطابُ وليِّ الأمر</div><div class="ttl noprint"><div><h2>خطابُ وليِّ الأمر</h2><p>نصٌّ جاهزٌ للنسخِ أو الواتساب أو الطباعة</p></div><div class="acts"><button class="btn" id="ltCopy">نسخُ النص</button>' + (st.s.gphone ? '<a class="btn g" target="_blank" rel="noopener" href="https://wa.me/' + esc(String(st.s.gphone).replace(/\D/g, '').replace(/^0/, '965')) + '?text=' + encodeURIComponent(txt) + '">واتساب</a>' : '') + '<button class="btn p" onclick="window.print()">' + ICO.print + ' طباعة</button></div></div>'
       + filtersHTML()
-      + '<div class="doc"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><b>' + esc(S.settings.school) + '</b><br><small class="muted">الإشرافُ العام — ' + esc(S.settings.supervisor) + '</small></div><img src="img/logo.svg" style="height:56px"></div><h2>إشعارُ وليِّ الأمر</h2><div class="kv"><b>الطالب:</b><span>' + esc(st.s.name) + '</span><b>الفصل:</b><span>' + esc(st.c.name) + '</span><b>المدّة:</b><span>' + esc(r.label) + '</span><b>التاريخ:</b><span>' + fmtDate(today(), true) + '</span></div><div class="txt" id="ltTxt">' + nl(txt) + '</div>'
+      + '<div class="doc"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><b>' + esc(S.settings.school) + '</b><br><small class="muted">الإشرافُ العام — ' + esc(S.settings.supervisor) + '</small></div><img src="img/logo.png" style="height:56px"></div><h2>إشعارُ وليِّ الأمر</h2><div class="kv"><b>الطالب:</b><span>' + esc(st.s.name) + '</span><b>الفصل:</b><span>' + esc(st.c.name) + '</span><b>المدّة:</b><span>' + esc(r.label) + '</span><b>التاريخ:</b><span>' + fmtDate(today(), true) + '</span></div><div class="txt" id="ltTxt">' + nl(txt) + '</div>'
       + '<table><tr><th>تأخير</th><th>غياب</th><th>بلا عذر</th><th>استدعاء</th><th>نوم</th><th>مخالفات</th><th>تعهّدات</th></tr><tr><td>' + ar(cnt.late) + '</td><td>' + ar(cnt.absent) + '</td><td>' + ar(cnt.unexcused) + '</td><td>' + ar(cnt.summon) + '</td><td>' + ar(cnt.sleep) + '</td><td>' + ar(cnt.viol) + '</td><td>' + ar(cnt.pledge) + '</td></tr></table>'
       + '<div class="sig"><div>توقيعُ وليِّ الأمر<span></span></div><div>المشرف<span>' + esc(S.settings.supervisor) + '</span></div><div>مديرُ المدرسة<span></span></div></div></div>';
     bindFilters(route);
