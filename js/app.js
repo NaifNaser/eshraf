@@ -10,7 +10,7 @@
   var TYPES = [
     { key: 'late', label: 'تأخيرٌ صباحي', short: 'تأخير', color: 'var(--c-late)', hex: '#D9A441', plural: 'تأخيرات' },
     { key: 'absent', label: 'غياب', short: 'غياب', color: 'var(--c-absent)', hex: '#A63D2F', plural: 'أيامَ غياب' },
-    { key: 'sick', label: 'مرضيّة', short: 'مرضيّة', color: 'var(--c-sick)', hex: '#2E86AB', plural: 'مرضيّات' },
+    { key: 'summon', label: 'استدعاءُ وليِّ الأمر', short: 'استدعاء', color: 'var(--c-summon)', hex: '#2E86AB', plural: 'استدعاءات' },
     { key: 'sleep', label: 'نومٌ في الحصّة', short: 'نوم', color: 'var(--c-sleep)', hex: '#6A4C93', plural: 'حالاتِ نوم' },
     { key: 'viol', label: 'مخالفة', short: 'مخالفة', color: 'var(--c-viol)', hex: '#8C2F5B', plural: 'مخالفات' },
     { key: 'expel', label: 'الفصلُ عن الدراسة', short: 'فصل', color: 'var(--c-expel)', hex: '#701C1C', plural: 'حالاتِ فصل' },
@@ -18,6 +18,7 @@
     { key: 'note', label: 'ملاحظة', short: 'ملاحظة', color: 'var(--c-note)', hex: '#7A6A58', plural: 'ملاحظات' }
   ];
   var TYPE = {}; TYPES.forEach(function (t) { TYPE[t.key] = t; });
+  function typeOf(k) { return TYPE[k] || { key: k, label: k, short: k, color: 'var(--muted)', hex: '#8a8a8a', plural: k }; }
   var VIOL_KEYS = ['dismiss', 'banned', 'uniform', 'behavior'];
   var ABS = { unexcused: 'بلا عذر', excused: 'بعذر' };
   var DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
@@ -72,11 +73,10 @@
       grades: [{ id: '10', name: 'الصفُّ العاشر', short: '١٠' }, { id: '11', name: 'الصفُّ الحاديَ عشر', short: '١١' }, { id: '12', name: 'الصفُّ الثانيَ عشر', short: '١٢' }],
       periods: 7, lateAfter: '07:15',
       alerts: { late: 3, absent: 3, viol: 2, sleep: 3 },
-      weights: { late: -1, absent: -3, sick: 0, sleep: -1, viol: -3, expel: -10, pledge: 0, note: 0 },
+      weights: { late: -1, absent: -3, summon: 0, sleep: -1, viol: -3, expel: -10, pledge: 0, note: 0 },
       violCats: { dismiss: 'فصلٌ من الحصّة', banned: 'ممنوعات', uniform: 'الزيُّ المدرسي', behavior: 'السلوك' },
       bannedItems: ['هاتف', 'سمّاعات', 'سجائر / فيب', 'أدواتٌ حادّة', 'أخرى'],
       actions: ['تنبيهٌ شفهي', 'إنذارٌ كتابي', 'استدعاءُ وليِّ الأمر', 'تعهّدٌ خطّي', 'تحويلٌ للإدارة'],
-      sickSources: ['مستوصف', 'مستشفى', 'عيادةٌ خاصّة', 'عذرُ وليِّ الأمر'],
       expelReasons: [{ reason: 'التدخين', days: 3 }, { reason: 'حملُ أدواتِ تدخين', days: 1 }, { reason: 'شجار', days: 7 }, { reason: 'سلوكٌ مشاغبٌ معَ المعلم', days: 7 }, { reason: 'الهروبُ من الحصّة', days: 1 }, { reason: 'الهروبُ من المدرسة', days: 3 }],
       pledgeText: 'أتعهّدُ أنا الطالبَ المذكورَ أعلاه بالالتزامِ بأنظمةِ المدرسةِ ولوائحِها، وعدمِ تكرارِ المخالفةِ المذكورة، وأتحمّلُ ما يترتّبُ على تكرارِها من إجراءاتٍ نظاميّة.',
       viewers: []
@@ -222,7 +222,7 @@
     var cur = (await loadDay(date)); var list = ((cur && cur.ev) || []).slice();
     ev.id = ev.id || uid('e'); ev.ts = ev.ts || Date.now();
     list.push(cleanEv(ev)); await saveDay(date, list);
-    var st = findStudent(ev.cls, ev.sid); log('إضافة ' + TYPE[ev.type].short, (st ? st.s.name : ev.sid) + ' · ' + date);
+    var st = findStudent(ev.cls, ev.sid); log('إضافة ' + typeOf(ev.type).short, (st ? st.s.name : ev.sid) + ' · ' + date);
     if (ev.type === 'late') await autoAbsenceFromLate(ev, date);
     return ev;
   }
@@ -238,12 +238,12 @@
   }
   async function updateEvent(date, ev) {
     var list = dayEvents(date).map(function (x) { return x.id === ev.id ? cleanEv(ev) : x; });
-    await saveDay(date, list); log('تعديل ' + TYPE[ev.type].short, ev.id + ' · ' + date);
+    await saveDay(date, list); log('تعديل ' + typeOf(ev.type).short, ev.id + ' · ' + date);
   }
   async function removeEvent(date, id) {
     var old = dayEvents(date).filter(function (x) { return x.id === id; })[0];
     var list = dayEvents(date).filter(function (x) { return x.id !== id; });
-    await saveDay(date, list); if (old) { var st = findStudent(old.cls, old.sid); log('حذف ' + TYPE[old.type].short, (st ? st.s.name : old.sid) + ' · ' + date); }
+    await saveDay(date, list); if (old) { var st = findStudent(old.cls, old.sid); log('حذف ' + typeOf(old.type).short, (st ? st.s.name : old.sid) + ' · ' + date); }
   }
   function cleanEv(e) { var o = {}; Object.keys(e).forEach(function (k) { if (e[k] !== undefined && e[k] !== null && e[k] !== '') o[k] = e[k]; }); return o; }
 
@@ -253,7 +253,7 @@
     Object.keys(map).sort().forEach(function (d) { if (d < from || d > to || !map[d]) return; (map[d].ev || []).forEach(function (e) { if (!f || f(e)) out.push(Object.assign({ date: d }, e)); }); });
     return out;
   }
-  function countBy(evs) { var c = { late: 0, absent: 0, unexcused: 0, sick: 0, sleep: 0, viol: 0, expel: 0, pledge: 0, note: 0, sickDays: 0, lateMin: 0, expelDays: 0 }; evs.forEach(function (e) { c[e.type] = (c[e.type] || 0) + 1; if (e.type === 'absent' && e.sub !== 'excused') c.unexcused++; if (e.type === 'sick') c.sickDays += (+e.days || 1); if (e.type === 'late') c.lateMin += (+e.min || 0); if (e.type === 'expel') c.expelDays += (+e.days || 0); }); return c; }
+  function countBy(evs) { var c = { late: 0, absent: 0, unexcused: 0, summon: 0, sleep: 0, viol: 0, expel: 0, pledge: 0, note: 0, lateMin: 0, expelDays: 0 }; evs.forEach(function (e) { c[e.type] = (c[e.type] || 0) + 1; if (e.type === 'absent' && e.sub !== 'excused') c.unexcused++; if (e.type === 'late') c.lateMin += (+e.min || 0); if (e.type === 'expel') c.expelDays += (+e.days || 0); }); return c; }
   function score(evs) { var w = S.settings.weights; return Math.round(evs.reduce(function (s, e) { return s + num(w[e.type], 0); }, 0) * 10) / 10; }
   function scoreHTML(v) { return '<span class="score ' + (v > 0 ? 'pos' : v < 0 ? 'neg' : '') + '">' + (v > 0 ? '+' : '') + ar(v) + '</span>'; }
   function periodRange() {
@@ -296,9 +296,9 @@
   $('sheetBg').onclick = closeSheet;
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });
   function tilesHTML(cnt, base, six) {
-    var keys = six ? ['late', 'absent', 'sick', 'sleep', 'viol', 'expel', 'pledge'] : TYPES.map(function (t) { return t.key; });
+    var keys = six ? ['late', 'absent', 'summon', 'sleep', 'viol', 'expel', 'pledge'] : TYPES.map(function (t) { return t.key; });
     return '<div class="tiles' + (six ? ' six' : '') + '">' + keys.map(function (k) {
-      var extra = k === 'absent' && cnt.unexcused ? '<div class="s">' + ar(cnt.unexcused) + ' بلا عذر</div>' : k === 'sick' && cnt.sickDays ? '<div class="s">' + ar(cnt.sickDays) + ' يوماً</div>' : k === 'late' && cnt.lateMin ? '<div class="s">' + ar(cnt.lateMin) + ' دقيقة</div>' : '';
+      var extra = k === 'absent' && cnt.unexcused ? '<div class="s">' + ar(cnt.unexcused) + ' بلا عذر</div>' : k === 'late' && cnt.lateMin ? '<div class="s">' + ar(cnt.lateMin) + ' دقيقة</div>' : '';
       var inner = '<div class="v">' + ar(cnt[k] || 0) + '</div><div class="l">' + TYPE[k].short + '</div>' + extra;
       return base ? '<a class="tile ' + k + '" href="' + base + k + '">' + inner + '</a>' : '<div class="tile ' + k + '">' + inner + '</div>';
     }).join('') + '</div>';
@@ -307,7 +307,7 @@
     if (e.type === 'viol') return (S.settings.violCats[e.sub] || e.sub || '') + (e.item ? ' — ' + e.item : '');
     if (e.type === 'absent') return ABS[e.sub] || ABS.unexcused;
     if (e.type === 'late') return (e.time ? fmtHM(e.time) : '') + (e.min ? ' (' + ar(e.min) + ' د)' : '');
-    if (e.type === 'sick') return (e.from ? fmtDate(e.from) + (e.to && e.to !== e.from ? ' – ' + fmtDate(e.to) : '') : '') + (e.days ? ' · ' + plural(e.days, 'يومٌ واحد', 'يومان', 'أيّام') : '') + (e.src ? ' · ' + e.src : '');
+    if (e.type === 'summon') return e.reason || '';
     if (e.type === 'pledge') return e.kind || '';
     if (e.type === 'expel') return (e.reason || '') + (e.from ? ' · ' + fmtDate(e.from) + (e.to && e.to !== e.from ? ' – ' + fmtDate(e.to) : '') : '') + (e.days ? ' · ' + plural(e.days, 'يومٌ واحد', 'يومان', 'أيّام') : '');
     return '';
@@ -322,7 +322,7 @@
     if (e.teacher) meta.push('المعلّم: ' + e.teacher);
     if (e.action) meta.push('الإجراء: ' + e.action);
     if (e.guardian) meta.push('حضرَ وليُّ الأمر');
-    return '<div class="ev ' + e.type + '" data-id="' + e.id + '" data-date="' + (e.date || '') + '"><span class="pip">' + TYPE[e.type].short + '</span><div class="body">'
+    return '<div class="ev ' + e.type + '" data-id="' + e.id + '" data-date="' + (e.date || '') + '"><span class="pip">' + typeOf(e.type).short + '</span><div class="body">'
       + (opts.noName ? '' : '<b><a href="#/student/' + e.cls + '/' + e.sid + '">' + esc(name) + '</a></b> <span class="m">' + esc(cname) + '</span> ')
       + (meta.length ? '<span class="m">' + esc(meta.join(' · ')) + '</span>' : '')
       + (e.note ? '<div class="n">' + nl(e.note) + '</div>' : '') + (e.type === 'pledge' ? '<div class="m"><a href="#/pledge/' + e.cls + '/' + e.sid + '/' + e.id + '">🖨 ورقةُ التعهّد</a></div>' : '') + '</div>'
@@ -370,7 +370,7 @@
       var body = '';
       if (t === 'late') body = '<div class="row2"><div class="field"><label>وقتُ الوصول</label><input id="f_time" type="time" value="' + esc(ev.time || hm()) + '"></div><div class="field"><label>دقائقُ التأخير</label><input id="f_min" type="number" min="0" value="' + esc(ev.min != null ? ev.min : Math.max(0, hm2m(hm()) - hm2m(st.lateAfter))) + '"></div></div><p class="hint">الطابورُ ينتهي ' + fmtHM(st.lateAfter) + ' — تُحسَبُ الدقائقُ تلقائياً ويمكنُ تعديلُها</p>';
       else if (t === 'absent') body = '<div class="chips" id="f_sub">' + Object.keys(ABS).map(function (k) { return '<button type="button" data-v="' + k + '" aria-pressed="' + ((ev.sub || 'unexcused') === k) + '">' + ABS[k] + '</button>'; }).join('') + '</div><div class="field"><label>سببُ الغياب / العذر</label><input id="f_reason" value="' + esc(ev.reason || '') + '" placeholder="اختياري"></div>';
-      else if (t === 'sick') body = '<div class="row2"><div class="field"><label>من</label><input id="f_from" type="date" value="' + esc(ev.from || date) + '"></div><div class="field"><label>إلى</label><input id="f_to" type="date" value="' + esc(ev.to || ev.from || date) + '"></div></div><div class="row2"><div class="field"><label>عددُ الأيّام</label><input id="f_days" type="number" min="1" value="' + esc(ev.days || 1) + '"></div><div class="field"><label>الجهةُ المصدِرة</label><select id="f_src"><option value="">—</option>' + (st.sickSources || []).map(function (x) { return '<option' + (ev.src === x ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select></div></div>';
+      else if (t === 'summon') body = '<div class="field"><label>سببُ الاستدعاء</label><input id="f_reason" value="' + esc(ev.reason || '') + '" placeholder="مثال: تكرارُ الغياب"></div><label class="hint" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="f_guardian"' + (ev.guardian ? ' checked' : '') + '> حضرَ وليُّ الأمر</label>';
       else if (t === 'sleep') body = '<div class="row2">' + perSel + teacher + '</div>';
       else if (t === 'viol') body = '<div class="chips" id="f_sub">' + VIOL_KEYS.map(function (k) { return '<button type="button" data-v="' + k + '" aria-pressed="' + ((ev.sub || 'behavior') === k) + '">' + esc(st.violCats[k]) + '</button>'; }).join('') + '</div>'
         + '<div id="f_banned"' + ((ev.sub || 'behavior') === 'banned' ? '' : ' hidden') + '><div class="field"><label>المادّةُ الممنوعة</label><select id="f_item"><option value="">—</option>' + (st.bannedItems || []).map(function (x) { return '<option' + (ev.item === x ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select></div></div>'
@@ -395,8 +395,6 @@
         epv.textContent = 'يبدأُ الفصلُ الفعليُّ من أوّلِ يومِ دوامٍ بعد التسجيل: ' + fmtDate(from, true) + (to !== from ? ' — حتى ' + fmtDate(to, true) : '');
       }
       if (epv) { updateEPreview(); var fdt = $('f_date'), fdy = $('f_days'); if (fdt) fdt.onchange = updateEPreview; if (fdy) fdy.oninput = updateEPreview; }
-      var f = $('f_from'), tt = $('f_to'), dd = $('f_days');
-      if (f && tt) { var calc = function () { if (f.value && tt.value && tt.value >= f.value) dd.value = daysBetween(f.value, tt.value); }; f.onchange = function () { if (!tt.value || tt.value < f.value) tt.value = f.value; calc(); }; tt.onchange = calc; }
       var tm = $('f_time'); if (tm) tm.onchange = function () { $('f_min').value = Math.max(0, hm2m(tm.value) - hm2m(st.lateAfter)); };
       $('f_cancel').onclick = closeSheet;
       var sw = $('f_switch'); if (sw) sw.onclick = function () { pickStudent(function (c, s) { recordSheet(Object.assign({}, o, { c: c, s: s, type: ev.type, ev: null })); }); };
@@ -410,7 +408,7 @@
       var out = { id: ev.id, ts: ev.ts, sid: o.s.id, cls: o.c._id, type: t, note: v('f_note') };
       if (t === 'late') { out.time = v('f_time'); out.min = +v('f_min') || 0; }
       if (t === 'absent') { out.sub = ev.sub || 'unexcused'; out.reason = v('f_reason'); }
-      if (t === 'sick') { out.from = v('f_from'); out.to = v('f_to'); out.days = +v('f_days') || 1; out.src = v('f_src'); }
+      if (t === 'summon') { out.reason = v('f_reason'); out.guardian = !!($('f_guardian') && $('f_guardian').checked); }
       if (t === 'sleep') { out.period = v('f_period'); out.teacher = v('f_teacher'); }
       if (t === 'viol') { out.sub = ev.sub || 'behavior'; out.item = out.sub === 'banned' ? v('f_item') : ''; out.period = v('f_period'); out.teacher = v('f_teacher'); out.action = v('f_action'); }
       if (t === 'expel') { out.reason = ev.reason || ''; out.days = Math.min(7, Math.max(1, +v('f_days') || 1)); out.from = nextSchoolDay(d); out.to = addSchoolDays(out.from, out.days); }
@@ -512,7 +510,7 @@
       + reportHead('سجلُّ يوم ' + fmtDate(date, true))
       + datebarHTML(date, '#/')
       + tilesHTML(cnt, null, false);
-    if (!RO()) html += '<div class="quickacts"><a href="#/late/' + date + '"><i style="background:var(--c-late)"></i>الطابورُ الصباحي</a><a href="#/absent/' + date + '"><i style="background:var(--c-absent)"></i>حصرُ الغياب</a><button data-t="viol"><i style="background:var(--c-viol)"></i>مخالفة</button><button data-t="expel"><i style="background:var(--c-expel)"></i>الفصلُ عن الدراسة</button><button data-t="sleep"><i style="background:var(--c-sleep)"></i>نومٌ في الحصّة</button><button data-t="sick"><i style="background:var(--c-sick)"></i>مرضيّة</button><button data-t="pledge"><i style="background:var(--c-pledge)"></i>تعهّد</button></div>';
+    if (!RO()) html += '<div class="quickacts"><a href="#/late/' + date + '"><i style="background:var(--c-late)"></i>الطابورُ الصباحي</a><a href="#/absent/' + date + '"><i style="background:var(--c-absent)"></i>حصرُ الغياب</a><button data-t="viol"><i style="background:var(--c-viol)"></i>مخالفة</button><button data-t="expel"><i style="background:var(--c-expel)"></i>الفصلُ عن الدراسة</button><button data-t="sleep"><i style="background:var(--c-sleep)"></i>نومٌ في الحصّة</button><button data-t="summon"><i style="background:var(--c-summon)"></i>استدعاءُ وليِّ الأمر</button><button data-t="pledge"><i style="background:var(--c-pledge)"></i>تعهّد</button></div>';
     if (!nStu) html += '<div class="empty"><b>ابدأْ بإضافةِ الفصولِ والطلاب</b>من قسمِ «الطلابُ والفصول» — الصقْ قائمةَ الأسماءِ وستُنشأُ الفصولُ في لحظات<br><a class="btn p" href="#/students" style="margin-top:12px">الطلابُ والفصول</a></div>';
     if (alerts.length) html += '<div class="panel no-brief"><h3>تنبيهاتُ ' + esc(periodRange().label) + ' <span class="acts"><a class="btn xs" href="#/reports">التقارير</a></span></h3><p class="hint">طلابٌ بلغوا حدَّ التنبيهِ المضبوطَ في الإعدادات</p><div class="alerts">' + alerts.slice(0, 12).map(alertHTML).join('') + (alerts.length > 12 ? '<p class="hint">و' + ar(alerts.length - 12) + ' آخرون…</p>' : '') + '</div></div>';
     html += '<div class="panel"><h3>سجلُّ اليوم <span class="muted small">' + plural(evs.length, 'تسجيلٌ واحد', 'تسجيلان', 'تسجيلات', 'لا تسجيلات') + '</span></h3><div class="evlist" id="hList">' + (evs.length ? evs.slice().sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); }).map(function (e) { return evHTML(e); }).join('') : '<div class="empty">لا تسجيلاتَ في هذا اليوم</div>') + '</div></div>';
@@ -574,20 +572,20 @@
     var cid = p[1] && cls(p[1]) ? p[1] : (LS.get('es_abs_cls') && cls(LS.get('es_abs_cls')) ? LS.get('es_abs_cls') : (classes[0] && classes[0]._id));
     if (cid) LS.set('es_abs_cls', cid);
     var c = cls(cid);
-    function stateOf(sid) { var e = dayEvents(date).filter(function (x) { return x.sid === sid && (x.type === 'absent' || x.type === 'sick'); }); var a = e.filter(function (x) { return x.type === 'absent'; })[0]; return a ? (a.sub === 'excused' ? 'excused' : 'absent') : (e.length ? 'sick' : ''); }
+    function stateOf(sid) { var a = dayEvents(date).filter(function (x) { return x.sid === sid && x.type === 'absent'; })[0]; return a ? (a.sub === 'excused' ? 'excused' : 'absent') : ''; }
     function gridHTML() {
       if (!c) return '<div class="empty"><b>لا فصولَ بعد</b><a class="btn p" href="#/students">أضفِ الفصول</a></div>';
       var L = (c.students || []).slice().sort(function (a, b) { return (+a.no || 999) - (+b.no || 999) || a.name.localeCompare(b.name, 'ar'); });
       var lateSet = {}; dayEvents(date).forEach(function (e) { if (e.type === 'late') lateSet[e.sid] = 1; });
-      return '<div class="students">' + L.map(function (s) { var st = stateOf(s.id); return '<button class="stu ' + (st === 'sick' ? 'excused' : st) + (lateSet[s.id] ? ' late-on' : '') + '" data-s="' + s.id + '">' + (s.no ? '<span class="no">' + ar(s.no) + '</span>' : '') + '<span class="av">' + esc(initials(s.name)) + '</span><span class="nm">' + esc(s.name) + '<small>' + (st === 'absent' ? 'غائبٌ بلا عذر' : st === 'excused' ? 'غائبٌ بعذر' : st === 'sick' ? 'مرضيّة' : lateSet[s.id] ? 'متأخّر' : 'حاضر') + '</small></span></button>'; }).join('') + '</div>';
+      return '<div class="students">' + L.map(function (s) { var st = stateOf(s.id); return '<button class="stu ' + st + (lateSet[s.id] ? ' late-on' : '') + '" data-s="' + s.id + '">' + (s.no ? '<span class="no">' + ar(s.no) + '</span>' : '') + '<span class="av">' + esc(initials(s.name)) + '</span><span class="nm">' + esc(s.name) + '<small>' + (st === 'absent' ? 'غائبٌ بلا عذر' : st === 'excused' ? 'غائبٌ بعذر' : lateSet[s.id] ? 'متأخّر' : 'حاضر') + '</small></span></button>'; }).join('') + '</div>';
     }
-    function summary() { if (!c) return ''; var n = (c.students || []).length, a = 0, x = 0, k = 0; (c.students || []).forEach(function (s) { var st = stateOf(s.id); if (st === 'absent') a++; else if (st === 'excused') x++; else if (st === 'sick') k++; }); return 'الحضور ' + ar(n - a - x - k) + ' من ' + ar(n) + ' · غيابٌ بلا عذر ' + ar(a) + ' · بعذر ' + ar(x) + ' · مرضيّة ' + ar(k); }
+    function summary() { if (!c) return ''; var n = (c.students || []).length, a = 0, x = 0; (c.students || []).forEach(function (s) { var st = stateOf(s.id); if (st === 'absent') a++; else if (st === 'excused') x++; }); return 'الحضور ' + ar(n - a - x) + ' من ' + ar(n) + ' · غيابٌ بلا عذر ' + ar(a) + ' · بعذر ' + ar(x); }
     view.innerHTML = '<div class="ttl"><div><h2>حصرُ الغياب</h2><p>انقرِ الطالبَ للتبديل: حاضر ← غائبٌ بلا عذر ← غائبٌ بعذر ← حاضر</p></div><div class="acts noprint"><button class="btn" onclick="window.print()">' + ICO.print + ' طباعة</button></div></div>'
       + reportHead('كشفُ الغياب — ' + (c ? c.name + ' — ' : '') + fmtDate(date, true))
       + datebarHTML(date, '#/absent/')
       + (classes.length ? '<div class="filters noprint"><div class="seg wrap-seg">' + classes.map(function (x) { return '<button data-c="' + x._id + '" aria-pressed="' + (x._id === cid) + '">' + esc(x.name) + '</button>'; }).join('') + '</div></div>' : '')
       + '<p class="hint" id="abSum">' + summary() + '</p><div id="abGrid">' + gridHTML() + '</div>'
-      + '<div class="legend"><span><i style="background:var(--c-absent)"></i>غيابٌ بلا عذر</span><span><i style="background:var(--c-sick)"></i>بعذر / مرضيّة</span><span><i style="background:var(--c-late)"></i>متأخّر</span></div>';
+      + '<div class="legend"><span><i style="background:var(--c-absent)"></i>غيابٌ بلا عذر</span><span><i style="background:var(--c-summon)"></i>بعذر</span><span><i style="background:var(--c-late)"></i>متأخّر</span></div>';
     bindDatebar('#/absent/');
     view.querySelectorAll('.filters .seg button').forEach(function (b) { b.onclick = function () { location.hash = '#/absent/' + date + '/' + b.dataset.c; }; });
     function bindGrid() {
@@ -597,7 +595,7 @@
           var sid = b.dataset.s, st = stateOf(sid), list = dayEvents(date).slice();
           var cur = list.filter(function (x) { return x.sid === sid && x.type === 'absent'; })[0];
           try {
-            if (st === '' || st === 'sick') { await addEvent(date, { sid: sid, cls: cid, type: 'absent', sub: 'unexcused' }); }
+            if (st === '') { await addEvent(date, { sid: sid, cls: cid, type: 'absent', sub: 'unexcused' }); }
             else if (st === 'absent') { await updateEvent(date, Object.assign({}, cur, { sub: 'excused' })); }
             else { await removeEvent(date, cur.id); }
             $('abGrid').innerHTML = gridHTML(); $('abSum').textContent = summary(); bindGrid();
@@ -635,7 +633,7 @@
     var ca = $('cAdd'); if (ca) ca.onclick = function () { classSheet(null); };
     var ci = $('cImport'); if (ci) ci.onclick = importSheet;
   }
-  function badges(cnt) { return ['late', 'absent', 'sick', 'sleep', 'viol', 'expel', 'pledge'].map(function (k) { return cnt[k] ? '<span class="b ' + k + '" title="' + TYPE[k].short + '">' + ar(cnt[k]) + '</span>' : ''; }).join(''); }
+  function badges(cnt) { return ['late', 'absent', 'summon', 'sleep', 'viol', 'expel', 'pledge'].map(function (k) { return cnt[k] ? '<span class="b ' + k + '" title="' + TYPE[k].short + '">' + ar(cnt[k]) + '</span>' : ''; }).join(''); }
   function classSheet(c) {
     var isNew = !c; c = c || { _id: uid('c'), name: '', grade: (S.settings.grades[0] || {}).id, order: (S.classes || []).length + 1, students: [], created: Date.now() };
     openSheet('<h3 class="t">' + (isNew ? 'فصلٌ جديد' : 'تعديلُ الفصل') + '</h3>'
@@ -693,16 +691,16 @@
     var html = '<div class="crumb"><a href="#/students">الطلابُ والفصول</a><span class="sep">›</span>' + esc(c.name) + '</div>'
       + '<div class="ttl"><div><h2>' + esc(c.name) + '</h2><p>' + esc(gradeName(c.grade)) + ' · ' + plural(L.length, 'طالبٌ واحد', 'طالبان', 'طلاب', 'بلا طلاب') + (c.archived ? ' · مؤرشف' : '') + '</p></div><div class="acts noprint">' + (RO() ? '' : '<button class="btn p" id="sAdd">' + ICO.plus + ' طلاب</button><button class="btn" id="cEdit">' + ICO.edit + ' الفصل</button>') + '<button class="btn" id="cCsv">' + ICO.dl + ' CSV</button><button class="btn" onclick="window.print()">' + ICO.print + ' طباعة</button></div></div>'
       + reportHead('تقريرُ الفصل ' + c.name, r.label) + filtersHTML() + tilesHTML(tot, null, true)
-      + '<div class="tblwrap"><table class="tbl" id="cTbl"><thead><tr><th data-k="no" class="c">#</th><th data-k="name">الطالب</th>' + ['late', 'absent', 'sick', 'sleep', 'viol', 'expel', 'pledge'].map(function (k) { return '<th data-k="' + k + '" class="c" style="color:' + TYPE[k].hex + '">' + TYPE[k].short + '</th>'; }).join('') + '<th data-k="score" class="c">المؤشّر</th><th class="c noprint"></th></tr></thead><tbody>'
-      + L.map(function (s) { var k = cntOf[s.id]; return '<tr><td class="c">' + (s.no ? ar(s.no) : '') + '</td><td><a href="#/student/' + c._id + '/' + s.id + '">' + esc(s.name) + '</a>' + (s.gphone ? ' <small class="muted">' + ar(s.gphone) + '</small>' : '') + '</td>' + ['late', 'absent', 'sick', 'sleep', 'viol', 'expel', 'pledge'].map(function (t) { return '<td class="c">' + (k[t] ? ar(k[t]) : '<span class="muted">–</span>') + '</td>'; }).join('') + '<td class="c">' + scoreHTML(k.score) + '</td><td class="c noprint">' + (RO() ? '' : '<button class="icon-btn se" data-s="' + s.id + '" title="تعديل">' + ICO.edit + '</button>') + '</td></tr>'; }).join('')
-      + (L.length ? '<tr class="tot"><td></td><td>المجموع</td>' + ['late', 'absent', 'sick', 'sleep', 'viol', 'expel', 'pledge'].map(function (t) { return '<td class="c">' + ar(tot[t]) + '</td>'; }).join('') + '<td></td><td class="noprint"></td></tr>' : '') + '</tbody></table></div>'
+      + '<div class="tblwrap"><table class="tbl" id="cTbl"><thead><tr><th data-k="no" class="c">#</th><th data-k="name">الطالب</th>' + ['late', 'absent', 'summon', 'sleep', 'viol', 'expel', 'pledge'].map(function (k) { return '<th data-k="' + k + '" class="c" style="color:' + TYPE[k].hex + '">' + TYPE[k].short + '</th>'; }).join('') + '<th data-k="score" class="c">المؤشّر</th><th class="c noprint"></th></tr></thead><tbody>'
+      + L.map(function (s) { var k = cntOf[s.id]; return '<tr><td class="c">' + (s.no ? ar(s.no) : '') + '</td><td><a href="#/student/' + c._id + '/' + s.id + '">' + esc(s.name) + '</a>' + (s.gphone ? ' <small class="muted">' + ar(s.gphone) + '</small>' : '') + '</td>' + ['late', 'absent', 'summon', 'sleep', 'viol', 'expel', 'pledge'].map(function (t) { return '<td class="c">' + (k[t] ? ar(k[t]) : '<span class="muted">–</span>') + '</td>'; }).join('') + '<td class="c">' + scoreHTML(k.score) + '</td><td class="c noprint">' + (RO() ? '' : '<button class="icon-btn se" data-s="' + s.id + '" title="تعديل">' + ICO.edit + '</button>') + '</td></tr>'; }).join('')
+      + (L.length ? '<tr class="tot"><td></td><td>المجموع</td>' + ['late', 'absent', 'summon', 'sleep', 'viol', 'expel', 'pledge'].map(function (t) { return '<td class="c">' + ar(tot[t]) + '</td>'; }).join('') + '<td></td><td class="noprint"></td></tr>' : '') + '</tbody></table></div>'
       + (L.length ? '' : '<div class="empty" style="margin-top:14px"><b>لا طلابَ في هذا الفصل</b>اضغطْ «+ طلاب» والصقْ الأسماء</div>');
     view.innerHTML = html;
     bindFilters(route);
     view.querySelectorAll('#cTbl th[data-k]').forEach(function (th) { if (th.dataset.k === sortKey) th.classList.add('on'); th.onclick = function () { S.clsSort = th.dataset.k; route(); }; });
     var sa = $('sAdd'); if (sa) sa.onclick = function () { addStudentsSheet(c); };
     var ce = $('cEdit'); if (ce) ce.onclick = function () { classSheet(c); };
-    $('cCsv').onclick = function () { downloadCSV(c.name + ' — ' + r.label + '.csv', [['#', 'الطالب', 'تأخير', 'غياب', 'بلا عذر', 'مرضية', 'أيام المرضية', 'نوم', 'مخالفات', 'فصل', 'أيام الفصل', 'تعهدات', 'ملاحظات', 'المؤشر']].concat(L.map(function (s) { var k = cntOf[s.id]; return [s.no || '', s.name, k.late, k.absent, k.unexcused, k.sick, k.sickDays, k.sleep, k.viol, k.expel, k.expelDays, k.pledge, k.note, k.score]; }))); };
+    $('cCsv').onclick = function () { downloadCSV(c.name + ' — ' + r.label + '.csv', [['#', 'الطالب', 'تأخير', 'غياب', 'بلا عذر', 'استدعاء', 'نوم', 'مخالفات', 'فصل', 'أيام الفصل', 'تعهدات', 'ملاحظات', 'المؤشر']].concat(L.map(function (s) { var k = cntOf[s.id]; return [s.no || '', s.name, k.late, k.absent, k.unexcused, k.summon, k.sleep, k.viol, k.expel, k.expelDays, k.pledge, k.note, k.score]; }))); };
     view.querySelectorAll('.se').forEach(function (b) { b.onclick = function () { var s = (c.students || []).filter(function (x) { return x.id === b.dataset.s; })[0]; studentSheet(c, s); }; });
   }
   function addStudentsSheet(c) {
@@ -781,19 +779,19 @@
     var html = '<div class="ttl"><div><h2>التقارير</h2><p>' + esc(S.settings.school) + ' · ' + esc(r.label) + '</p></div><div class="acts noprint"><button class="btn" id="rCsv">' + ICO.dl + ' CSV الفصول</button><button class="btn" id="rCsvAll">' + ICO.dl + ' CSV كلِّ التسجيلات</button><button class="btn" onclick="window.print()">' + ICO.print + ' طباعة</button></div></div>'
       + reportHead('التقريرُ العام', r.label) + filtersHTML() + tilesHTML(tot, null, false)
       + '<div class="panel"><h3>التوزيعُ الأسبوعيُّ للمدرسة</h3><div class="chart" id="rChart"></div>' + LEGEND + '</div>'
-      + '<div class="panel"><h3>الفصول</h3><div class="tblwrap"><table class="tbl"><thead><tr><th>الفصل</th><th class="c">الطلاب</th>' + ['late', 'absent', 'sick', 'sleep', 'viol', 'expel', 'pledge'].map(function (k) { return '<th class="c" style="color:' + TYPE[k].hex + '">' + TYPE[k].short + '</th>'; }).join('') + '<th class="c">غيابٌ بلا عذر</th><th class="c">المؤشّر</th></tr></thead><tbody>'
-      + classes.map(function (c) { var k = countBy(byCls[c._id] || []); return '<tr><td><a href="#/class/' + c._id + '">' + esc(c.name) + '</a></td><td class="c">' + ar((c.students || []).length) + '</td>' + ['late', 'absent', 'sick', 'sleep', 'viol', 'expel', 'pledge'].map(function (t) { return '<td class="c">' + (k[t] ? ar(k[t]) : '<span class="muted">–</span>') + '</td>'; }).join('') + '<td class="c">' + ar(k.unexcused) + '</td><td class="c">' + scoreHTML(score(byCls[c._id] || [])) + '</td></tr>'; }).join('')
-      + '<tr class="tot"><td>المجموع</td><td class="c">' + ar(allStudents().length) + '</td>' + ['late', 'absent', 'sick', 'sleep', 'viol', 'expel', 'pledge'].map(function (t) { return '<td class="c">' + ar(tot[t]) + '</td>'; }).join('') + '<td class="c">' + ar(tot.unexcused) + '</td><td></td></tr></tbody></table></div></div>'
+      + '<div class="panel"><h3>الفصول</h3><div class="tblwrap"><table class="tbl"><thead><tr><th>الفصل</th><th class="c">الطلاب</th>' + ['late', 'absent', 'summon', 'sleep', 'viol', 'expel', 'pledge'].map(function (k) { return '<th class="c" style="color:' + TYPE[k].hex + '">' + TYPE[k].short + '</th>'; }).join('') + '<th class="c">غيابٌ بلا عذر</th><th class="c">المؤشّر</th></tr></thead><tbody>'
+      + classes.map(function (c) { var k = countBy(byCls[c._id] || []); return '<tr><td><a href="#/class/' + c._id + '">' + esc(c.name) + '</a></td><td class="c">' + ar((c.students || []).length) + '</td>' + ['late', 'absent', 'summon', 'sleep', 'viol', 'expel', 'pledge'].map(function (t) { return '<td class="c">' + (k[t] ? ar(k[t]) : '<span class="muted">–</span>') + '</td>'; }).join('') + '<td class="c">' + ar(k.unexcused) + '</td><td class="c">' + scoreHTML(score(byCls[c._id] || [])) + '</td></tr>'; }).join('')
+      + '<tr class="tot"><td>المجموع</td><td class="c">' + ar(allStudents().length) + '</td>' + ['late', 'absent', 'summon', 'sleep', 'viol', 'expel', 'pledge'].map(function (t) { return '<td class="c">' + ar(tot[t]) + '</td>'; }).join('') + '<td class="c">' + ar(tot.unexcused) + '</td><td></td></tr></tbody></table></div></div>'
       + '<div class="panel"><h3>المخالفاتُ بحسبِ النوع</h3><ol class="rank">' + VIOL_KEYS.map(function (k) { var n = violBy[k] || 0, max = Math.max.apply(null, VIOL_KEYS.map(function (x) { return violBy[x] || 0; }).concat([1])); return '<li><span style="min-width:140px">' + esc(S.settings.violCats[k]) + '</span><span class="bar"><i style="width:' + Math.round(n / max * 100) + '%;background:var(--c-viol)"></i></span><span class="v">' + ar(n) + '</span></li>'; }).join('') + '</ol></div>'
       + '<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">' + rank('late', 'الأكثرُ تأخيراً') + rank('unexcused', 'الأكثرُ غياباً بلا عذر') + rank('viol', 'الأكثرُ مخالفات') + rank('expel', 'الأكثرُ فصلاً') + rank('sleep', 'الأكثرُ نوماً في الحصص') + '</div>';
     view.innerHTML = html;
     bindFilters(route);
     Charts.stackedBars($('rChart'), weekBuckets(evs, r.from, r.to), SERIES, { height: 220 });
-    $('rCsv').onclick = function () { downloadCSV('تقرير الفصول — ' + r.label + '.csv', [['الفصل', 'الطلاب', 'تأخير', 'غياب', 'بلا عذر', 'مرضية', 'نوم', 'مخالفات', 'فصل', 'تعهدات', 'ملاحظات']].concat(classes.map(function (c) { var k = countBy(byCls[c._id] || []); return [c.name, (c.students || []).length, k.late, k.absent, k.unexcused, k.sick, k.sleep, k.viol, k.expel, k.pledge, k.note]; }))); };
+    $('rCsv').onclick = function () { downloadCSV('تقرير الفصول — ' + r.label + '.csv', [['الفصل', 'الطلاب', 'تأخير', 'غياب', 'بلا عذر', 'استدعاء', 'نوم', 'مخالفات', 'فصل', 'تعهدات', 'ملاحظات']].concat(classes.map(function (c) { var k = countBy(byCls[c._id] || []); return [c.name, (c.students || []).length, k.late, k.absent, k.unexcused, k.summon, k.sleep, k.viol, k.expel, k.pledge, k.note]; }))); };
     $('rCsvAll').onclick = function () { exportAllCSV(evs, 'كل التسجيلات — ' + r.label + '.csv'); };
   }
   function exportAllCSV(evs, name) {
-    downloadCSV(name, [['التاريخ', 'الفصل', 'الطالب', 'النوع', 'التفصيل', 'الحصة', 'المعلم', 'الإجراء', 'ملاحظة']].concat(evs.map(function (e) { var st = findStudent(e.cls, e.sid); return [e.date, st ? st.c.name : e.cls, st ? st.s.name : e.sid, TYPE[e.type].short, subLabel(e), e.period || '', e.teacher || '', e.action || '', e.note || (e.reason || '')]; })));
+    downloadCSV(name, [['التاريخ', 'الفصل', 'الطالب', 'النوع', 'التفصيل', 'الحصة', 'المعلم', 'الإجراء', 'ملاحظة']].concat(evs.map(function (e) { var st = findStudent(e.cls, e.sid); return [e.date, st ? st.c.name : e.cls, st ? st.s.name : e.sid, typeOf(e.type).short, subLabel(e), e.period || '', e.teacher || '', e.action || '', e.note || (e.reason || '')]; })));
   }
 
   /* ---------------- السجلُّ العام ---------------- */
@@ -827,7 +825,7 @@
     if (!ev) throw new Error('التعهّدُ غيرُ موجود');
     var r = periodRange(), cnt = countBy(evsIn(r.from, r.to, function (e) { return e.sid === st.s.id; }));
     view.innerHTML = '<div class="crumb noprint"><a href="#/student/' + st.c._id + '/' + st.s.id + '">' + esc(st.s.name) + '</a><span class="sep">›</span>ورقةُ التعهّد</div><div class="ttl noprint"><div><h2>ورقةُ التعهّد</h2></div><div class="acts"><button class="btn p" onclick="window.print()">' + ICO.print + ' طباعة</button></div></div>'
-      + '<div class="doc"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><b>' + esc(S.settings.school) + '</b><br><small class="muted">الإشرافُ التربوي — ' + esc(S.settings.supervisor) + '</small></div><img src="img/logo.svg" style="height:56px"></div>'
+      + '<div class="doc"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><b>' + esc(S.settings.school) + '</b><br><small class="muted">الإشرافُ العام — ' + esc(S.settings.supervisor) + '</small></div><img src="img/logo.svg" style="height:56px"></div>'
       + '<h2>تعهّدٌ خطّي</h2>'
       + '<div class="kv"><b>اسمُ الطالب:</b><span>' + esc(st.s.name) + '</span><b>الفصل:</b><span>' + esc(st.c.name) + '</span><b>التاريخ:</b><span>' + fmtDate(date, true) + ' — ' + esc(hijri(pd(date))) + '</span><b>الموضوع:</b><span>' + esc(ev.kind || '—') + '</span></div>'
       + '<div class="txt">' + nl(ev.text || S.settings.pledgeText) + (ev.note ? '\n\n' + nl(ev.note) : '') + '</div>'
@@ -846,8 +844,8 @@
     var txt = 'السلامُ عليكم ورحمةُ اللهِ وبركاته\nوليَّ أمرِ الطالبِ ' + st.s.name + ' — ' + st.c.name + '\nنفيدُكم بأنّ سجلَّ ابنِكم خلالَ ' + r.label + ' تضمّنَ ما يلي:\n' + (lines.length ? lines.map(function (l) { return '• ' + l; }).join('\n') : '• لا ملاحظاتَ تُذكَر — ونشكرُ التزامَه') + '\nونأملُ التكرّمَ بمتابعتِه' + (lines.length ? ' ومراجعةِ الإشرافِ التربويِّ عند الحاجة' : '') + '.\n' + S.settings.supervisor + ' — ' + S.settings.school;
     view.innerHTML = '<div class="crumb noprint"><a href="#/student/' + st.c._id + '/' + st.s.id + '">' + esc(st.s.name) + '</a><span class="sep">›</span>خطابُ وليِّ الأمر</div><div class="ttl noprint"><div><h2>خطابُ وليِّ الأمر</h2><p>نصٌّ جاهزٌ للنسخِ أو الواتساب أو الطباعة</p></div><div class="acts"><button class="btn" id="ltCopy">نسخُ النص</button>' + (st.s.gphone ? '<a class="btn g" target="_blank" rel="noopener" href="https://wa.me/' + esc(String(st.s.gphone).replace(/\D/g, '').replace(/^0/, '965')) + '?text=' + encodeURIComponent(txt) + '">واتساب</a>' : '') + '<button class="btn p" onclick="window.print()">' + ICO.print + ' طباعة</button></div></div>'
       + filtersHTML()
-      + '<div class="doc"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><b>' + esc(S.settings.school) + '</b><br><small class="muted">الإشرافُ التربوي — ' + esc(S.settings.supervisor) + '</small></div><img src="img/logo.svg" style="height:56px"></div><h2>إشعارُ وليِّ الأمر</h2><div class="kv"><b>الطالب:</b><span>' + esc(st.s.name) + '</span><b>الفصل:</b><span>' + esc(st.c.name) + '</span><b>المدّة:</b><span>' + esc(r.label) + '</span><b>التاريخ:</b><span>' + fmtDate(today(), true) + '</span></div><div class="txt" id="ltTxt">' + nl(txt) + '</div>'
-      + '<table><tr><th>تأخير</th><th>غياب</th><th>بلا عذر</th><th>مرضيّة</th><th>نوم</th><th>مخالفات</th><th>تعهّدات</th></tr><tr><td>' + ar(cnt.late) + '</td><td>' + ar(cnt.absent) + '</td><td>' + ar(cnt.unexcused) + '</td><td>' + ar(cnt.sick) + '</td><td>' + ar(cnt.sleep) + '</td><td>' + ar(cnt.viol) + '</td><td>' + ar(cnt.pledge) + '</td></tr></table>'
+      + '<div class="doc"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><b>' + esc(S.settings.school) + '</b><br><small class="muted">الإشرافُ العام — ' + esc(S.settings.supervisor) + '</small></div><img src="img/logo.svg" style="height:56px"></div><h2>إشعارُ وليِّ الأمر</h2><div class="kv"><b>الطالب:</b><span>' + esc(st.s.name) + '</span><b>الفصل:</b><span>' + esc(st.c.name) + '</span><b>المدّة:</b><span>' + esc(r.label) + '</span><b>التاريخ:</b><span>' + fmtDate(today(), true) + '</span></div><div class="txt" id="ltTxt">' + nl(txt) + '</div>'
+      + '<table><tr><th>تأخير</th><th>غياب</th><th>بلا عذر</th><th>استدعاء</th><th>نوم</th><th>مخالفات</th><th>تعهّدات</th></tr><tr><td>' + ar(cnt.late) + '</td><td>' + ar(cnt.absent) + '</td><td>' + ar(cnt.unexcused) + '</td><td>' + ar(cnt.summon) + '</td><td>' + ar(cnt.sleep) + '</td><td>' + ar(cnt.viol) + '</td><td>' + ar(cnt.pledge) + '</td></tr></table>'
       + '<div class="sig"><div>توقيعُ وليِّ الأمر<span></span></div><div>المشرف<span>' + esc(S.settings.supervisor) + '</span></div><div>مديرُ المدرسة<span></span></div></div></div>';
     bindFilters(route);
     $('ltCopy').onclick = function () { navigator.clipboard.writeText(txt).then(function () { toast('نُسخ النص'); }, function () { toast('تعذّر النسخ', true); }); };
@@ -865,7 +863,7 @@
       + '<div class="panel"><h3>حدودُ التنبيه</h3><p class="hint">يظهرُ الطالبُ في تنبيهاتِ الرئيسة إذا بلغَ هذا العددَ في المدّةِ المختارة (صفرٌ = بلا تنبيه)</p><div class="tiles" style="grid-template-columns:repeat(4,1fr)">' + ['late', 'absent', 'viol', 'sleep'].map(function (k) { return '<div class="tile ' + k + '"><div class="l">' + TYPE[k].short + (k === 'absent' ? ' بلا عذر' : '') + '</div><input class="al_in" data-k="' + k + '" type="number" min="0" value="' + esc(st.alerts[k]) + '" style="width:100%;font-size:22px;border:1px solid var(--line);border-radius:8px;padding:2px 8px"' + (ro ? ' disabled' : '') + '></div>'; }).join('') + '</div></div>'
       + '<div class="panel"><h3>أوزانُ مؤشّرِ السلوك</h3><p class="hint">مجموعُ الأوزانِ لكلِّ تسجيلاتِ الطالب — سالبٌ للمخالفات، صفرٌ لما لا يُحتسَب</p><div class="tiles">' + TYPES.map(function (t) { return '<div class="tile ' + t.key + '"><div class="l">' + t.short + '</div><input class="w_in" data-k="' + t.key + '" type="number" step="0.5" value="' + esc(st.weights[t.key]) + '" style="width:100%;font-size:22px;border:1px solid var(--line);border-radius:8px;padding:2px 8px"' + (ro ? ' disabled' : '') + '></div>'; }).join('') + '</div></div>'
       + '<div class="panel"><h3>التصنيفاتُ والقوائم</h3><div class="row2">' + '<div>' + VIOL_KEYS.map(function (k) { return '<div class="field"><label>مخالفة: ' + k + '</label><input class="vc_in" data-k="' + k + '" value="' + esc(st.violCats[k]) + '"' + (ro ? ' disabled' : '') + '></div>'; }).join('') + '</div>'
-      + '<div>' + listField('s_banned', 'الموادُّ الممنوعة', st.bannedItems) + listField('s_actions', 'الإجراءاتُ المتّخذة', st.actions) + listField('s_sick', 'جهاتُ المرضيّات', st.sickSources) + '</div></div></div>'
+      + '<div>' + listField('s_banned', 'الموادُّ الممنوعة', st.bannedItems) + listField('s_actions', 'الإجراءاتُ المتّخذة', st.actions) + '</div></div></div>'
       + '<div class="panel"><h3>أسبابُ الفصلِ عن الدراسة ومدّتُها</h3><p class="hint">سببٌ ثمّ عددُ أيّامِ الفصلِ الافتراضي في كلِّ سطر، مفصولَين بـ | — مثال: تدخين | 3</p>' + listField('s_expel', 'أسبابُ الفصل', st.expelReasons.map(function (x) { return x.reason + ' | ' + x.days; })) + '</div>'
       + '<div class="panel"><h3>نصُّ التعهّدِ الافتراضي</h3><div class="field"><textarea id="s_pledge" style="min-height:110px"' + (ro ? ' disabled' : '') + '>' + esc(st.pledgeText) + '</textarea></div></div>'
       + '<div class="panel"><h3>مشرفونَ قارئون</h3>' + listField('s_viewers', 'بريدٌ في كلِّ سطر — يقرأُ كلَّ شيءٍ ولا يعدّل (يحتاجُ حساباً في فايربيس)', st.viewers) + '</div>'
@@ -882,7 +880,7 @@
       view.querySelectorAll('.w_in').forEach(function (i) { st.weights[i.dataset.k] = num(i.value, 0); });
       view.querySelectorAll('.vc_in').forEach(function (i) { st.violCats[i.dataset.k] = i.value.trim() || st.violCats[i.dataset.k]; });
       var L = function (id) { return $(id).value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean); };
-      st.bannedItems = L('s_banned'); st.actions = L('s_actions'); st.sickSources = L('s_sick'); st.pledgeText = $('s_pledge').value.trim(); st.viewers = L('s_viewers').map(function (e) { return e.toLowerCase(); });
+      st.bannedItems = L('s_banned'); st.actions = L('s_actions'); st.pledgeText = $('s_pledge').value.trim(); st.viewers = L('s_viewers').map(function (e) { return e.toLowerCase(); });
       try { await saveSettings(); await saveAccess(); log('حفظُ الإعدادات', ''); toast('حُفظت الإعدادات'); renderHeader(); } catch (e) { fail(e); }
     };
     $('bkJson').onclick = async function () { await loadAll(true); downloadBlob('eshraf-backup-' + today() + '.json', JSON.stringify({ v: 1, at: Date.now(), settings: S.settings, classes: S.classes, days: S.all.map }, null, 1), 'application/json'); };
@@ -923,7 +921,7 @@
         var e = { id: uid('e'), sid: x.s.id, cls: x.c._id, ts: ts + k * 60e3 };
         if (r < 0.35) { var m = 1 + rnd(25); Object.assign(e, { type: 'late', time: ('0' + Math.floor((435 + m) / 60)).slice(-2) + ':' + ('0' + ((435 + m) % 60)).slice(-2), min: m }); }
         else if (r < 0.6) { if (ev.some(function (y) { return y.sid === e.sid && y.type === 'absent'; })) continue; Object.assign(e, { type: 'absent', sub: Math.random() < 0.7 ? 'unexcused' : 'excused' }); }
-        else if (r < 0.68) Object.assign(e, { type: 'sick', from: date, to: addDays(date, rnd(3)), days: 1 + rnd(3), src: pick(st.sickSources) });
+        else if (r < 0.68) Object.assign(e, { type: 'summon', reason: pick(['تكرارُ الغياب', 'تكرارُ التأخير', 'متابعةٌ عامة', 'مخالفةٌ سلوكية']), guardian: Math.random() < 0.6 });
         else if (r < 0.78) Object.assign(e, { type: 'sleep', period: 1 + rnd(7), teacher: 'أ. ' + pick(FIRST) });
         else if (r < 0.93) { var sub = pick(VIOL_KEYS); Object.assign(e, { type: 'viol', sub: sub, item: sub === 'banned' ? pick(st.bannedItems) : '', period: 1 + rnd(7), teacher: 'أ. ' + pick(FIRST), action: pick(st.actions), note: sub === 'uniform' ? 'بلا زيٍّ مدرسي' : sub === 'dismiss' ? 'إخلالٌ بنظامِ الحصّة' : '' }); }
         else if (r < 0.97) Object.assign(e, { type: 'pledge', kind: pick(['عدمُ تكرارِ التأخير', 'الالتزامُ بالزيّ', 'عدمُ إحضارِ الهاتف', 'احترامُ المعلّم']), guardian: Math.random() < 0.5 });
