@@ -15,7 +15,8 @@ service cloud.firestore {
     // المشرفُ (أو المشرفون) — قراءةٌ وكتابةٌ كاملة
     function esAdmin() {
       return request.auth != null && request.auth.token.email in [
-        'naifnaser95@gmail.com'
+        'naifnaser95@gmail.com',
+        'wahabfifa12@gmail.com'
       ];
     }
     // مشرفٌ قارئ: بريدُه في es_meta/access.viewers (تُكتَبُ من الإعدادات)

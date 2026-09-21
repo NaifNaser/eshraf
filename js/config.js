@@ -10,9 +10,9 @@
 window.ESHRAF_CONFIG = {
   PROJECT_ID: 'vak-quiz-96d5f',
   API_KEY: 'AIzaSyADogtO8s6kDuTrs1Tup6J4acY47T5DmdM',
-  ADMINS: ['naifnaser95@gmail.com'],
+  ADMINS: ['naifnaser95@gmail.com', 'wahabfifa12@gmail.com'],
   SCHOOL: 'ثانوية طلحة بن عبيدالله. بنين - مدينة صباح الأحمد',
   SUPERVISOR: 'أ. نايف ناصر',
   PREFIX: 'es_',          /* بادئةُ مجموعاتِ فايرستور: es_meta · es_classes · es_days · es_log */
-  VERSION: 1
+  VERSION: 2
 };
