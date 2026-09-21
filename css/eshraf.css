@@ -107,6 +107,8 @@ footer{text-align:center;color:var(--muted);font-size:14px;padding:20px;border-t
 .hint{font-size:14px;color:var(--muted);margin:0 0 10px}
 
 /* ===== البطاقاتُ والشبكات ===== */
+.grade-h{font-size:19px;color:var(--navy);font-weight:700;margin:26px 0 12px;padding-top:16px;border-top:1px solid var(--line);display:flex;align-items:baseline;gap:8px}
+.grade-h:first-of-type{margin-top:6px;padding-top:0;border-top:none}
 .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;position:relative;transition:transform var(--t-mid) var(--e-out),box-shadow var(--t-mid)}
 a.card:hover,.card.link:hover{transform:translateY(-2px);box-shadow:var(--sh);border-color:rgba(224,160,48,.6)}

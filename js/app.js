@@ -592,9 +592,15 @@
     var r = periodRange(), showArch = p[0] === 'archived';
     var list = (S.classes || []).filter(function (c) { return showArch ? c.archived : !c.archived; }).sort(function (a, b) { return (a.order || 0) - (b.order || 0) || String(a.name).localeCompare(String(b.name), 'ar'); });
     var byCls = {}; evsIn(r.from, r.to).forEach(function (e) { byCls[e.cls] = byCls[e.cls] || []; byCls[e.cls].push(e); });
+    var byGrade = {}; list.forEach(function (c) { (byGrade[c.grade] = byGrade[c.grade] || []).push(c); });
+    var gradeOrder = (S.settings.grades || []).map(function (g) { return g.id; });
+    Object.keys(byGrade).forEach(function (gid) { if (gradeOrder.indexOf(gid) === -1) gradeOrder.push(gid); });
+    var groupsHtml = gradeOrder.filter(function (gid) { return byGrade[gid] && byGrade[gid].length; }).map(function (gid) {
+      return '<h3 class="grade-h">' + esc(gradeName(gid)) + ' <span class="muted small">' + plural(byGrade[gid].length, 'فصلٌ واحد', 'فصلان', 'فصول', 'بلا فصول') + '</span></h3><div class="grid">' + byGrade[gid].map(function (c) { return classCard(c, countBy(byCls[c._id] || [])); }).join('') + '</div>';
+    }).join('');
     var html = '<div class="ttl"><div><h2>الطلابُ والفصول</h2><p>' + ar(allStudents().length) + ' طالباً في ' + ar(activeClasses().length) + ' فصلاً</p></div><div class="acts">' + (RO() ? '' : '<button class="btn p" id="cAdd">' + ICO.plus + ' فصلٌ جديد</button><button class="btn" id="cImport">استيرادُ قائمة</button>') + '<a class="btn" href="#/students/' + (showArch ? '' : 'archived') + '">' + (showArch ? 'الفصولُ الحاليّة' : 'المؤرشفة') + '</a></div></div>'
       + '<div class="searchbar"><input id="sq" placeholder="ابحثْ عن طالبٍ في كلِّ الفصول…" autocomplete="off"></div><div class="picklist" id="sres" style="margin-bottom:16px"></div>'
-      + (list.length ? '<div class="grid">' + list.map(function (c) { return classCard(c, countBy(byCls[c._id] || [])); }).join('') + '</div>' : '<div class="empty"><b>' + (showArch ? 'لا فصولَ مؤرشفة' : 'لا فصولَ بعد') + '</b>' + (showArch ? '' : 'أنشئْ فصلاً ثمّ الصقْ أسماءَ طلابِه، أو استوردْ قائمةً كاملةً (فصل، اسم) دفعةً واحدة') + '</div>');
+      + (list.length ? groupsHtml : '<div class="empty"><b>' + (showArch ? 'لا فصولَ مؤرشفة' : 'لا فصولَ بعد') + '</b>' + (showArch ? '' : 'أنشئْ فصلاً ثمّ الصقْ أسماءَ طلابِه، أو استوردْ قائمةً كاملةً (فصل، اسم) دفعةً واحدة') + '</div>');
     view.innerHTML = html;
     var sq = $('sq'), sres = $('sres');
     sq.oninput = function () { var rows = searchStudents(sq.value, 15); sres.innerHTML = rows.map(function (x) { var cnt = countBy((byCls[x.c._id] || []).filter(function (e) { return e.sid === x.s.id; })); return '<a class="pick" href="#/student/' + x.c._id + '/' + x.s.id + '"><span class="av">' + esc(initials(x.s.name)) + '</span><span class="nm">' + esc(x.s.name) + '<small>' + esc(x.c.name) + '</small></span><span class="bd">' + badges(cnt) + '</span></a>'; }).join(''); };
