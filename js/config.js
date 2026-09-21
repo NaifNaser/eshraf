@@ -14,5 +14,5 @@ window.ESHRAF_CONFIG = {
   SCHOOL: 'ثانوية طلحة بن عبيدالله. بنين - مدينة صباح الأحمد',
   SUPERVISOR: 'أ. نايف ناصر',
   PREFIX: 'es_',          /* بادئةُ مجموعاتِ فايرستور: es_meta · es_classes · es_days · es_log */
-  VERSION: 3
+  VERSION: 4
 };
