@@ -53,6 +53,8 @@
   function plural(n, one, two, many, none) { n = +n || 0; if (!n) return none || ('لا ' + many); if (n === 1) return one; if (n === 2) return two; if (n <= 10) return ar(n) + ' ' + many; return ar(n) + ' ' + one; }
   function daysBetween(a, b) { return Math.round((pd(b) - pd(a)) / 864e5) + 1; }
   function isWeekend(s) { var g = pd(s).getDay(); return g === 5 || g === 6; }
+  function nextSchoolDay(s) { var d = addDays(s, 1); while (isWeekend(d)) d = addDays(d, 1); return d; }
+  function addSchoolDays(s, n) { var d = s, c = 1; while (c < n) { d = addDays(d, 1); if (!isWeekend(d)) c++; } return d; }
   function nl(s) { return esc(s).replace(/\n/g, '<br>'); }
   function downloadBlob(name, content, type) { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], { type: type })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800); }
   function downloadCSV(name, rows) { var csv = '﻿' + rows.map(function (r) { return r.map(function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(','); }).join('\n'); downloadBlob(name, csv, 'text/csv;charset=utf-8'); }
@@ -75,7 +77,7 @@
       bannedItems: ['هاتف', 'سمّاعات', 'سجائر / فيب', 'أدواتٌ حادّة', 'أخرى'],
       actions: ['تنبيهٌ شفهي', 'إنذارٌ كتابي', 'استدعاءُ وليِّ الأمر', 'تعهّدٌ خطّي', 'تحويلٌ للإدارة'],
       sickSources: ['مستوصف', 'مستشفى', 'عيادةٌ خاصّة', 'عذرُ وليِّ الأمر'],
-      expelReasons: [{ reason: 'التدخين', days: 3 }, { reason: 'حملُ أدواتِ تدخين', days: 1 }, { reason: 'شجار', days: 7 }, { reason: 'سلوكٌ مشاغبٌ معَ المعلم', days: 7 }],
+      expelReasons: [{ reason: 'التدخين', days: 3 }, { reason: 'حملُ أدواتِ تدخين', days: 1 }, { reason: 'شجار', days: 7 }, { reason: 'سلوكٌ مشاغبٌ معَ المعلم', days: 7 }, { reason: 'الهروبُ من الحصّة', days: 1 }, { reason: 'الهروبُ من المدرسة', days: 3 }],
       pledgeText: 'أتعهّدُ أنا الطالبَ المذكورَ أعلاه بالالتزامِ بأنظمةِ المدرسةِ ولوائحِها، وعدمِ تكرارِ المخالفةِ المذكورة، وأتحمّلُ ما يترتّبُ على تكرارِها من إجراءاتٍ نظاميّة.',
       viewers: []
     };
@@ -307,7 +309,7 @@
     if (e.type === 'late') return (e.time ? fmtHM(e.time) : '') + (e.min ? ' (' + ar(e.min) + ' د)' : '');
     if (e.type === 'sick') return (e.from ? fmtDate(e.from) + (e.to && e.to !== e.from ? ' – ' + fmtDate(e.to) : '') : '') + (e.days ? ' · ' + plural(e.days, 'يومٌ واحد', 'يومان', 'أيّام') : '') + (e.src ? ' · ' + e.src : '');
     if (e.type === 'pledge') return e.kind || '';
-    if (e.type === 'expel') return (e.reason || '') + (e.days ? ' · ' + plural(e.days, 'يومٌ واحد', 'يومان', 'أيّام') : '') + (e.to && e.to !== e.date ? ' (حتى ' + fmtDate(e.to) + ')' : '');
+    if (e.type === 'expel') return (e.reason || '') + (e.from ? ' · ' + fmtDate(e.from) + (e.to && e.to !== e.from ? ' – ' + fmtDate(e.to) : '') : '') + (e.days ? ' · ' + plural(e.days, 'يومٌ واحد', 'يومان', 'أيّام') : '');
     return '';
   }
   function evHTML(e, opts) {
@@ -373,7 +375,7 @@
       else if (t === 'viol') body = '<div class="chips" id="f_sub">' + VIOL_KEYS.map(function (k) { return '<button type="button" data-v="' + k + '" aria-pressed="' + ((ev.sub || 'behavior') === k) + '">' + esc(st.violCats[k]) + '</button>'; }).join('') + '</div>'
         + '<div id="f_banned"' + ((ev.sub || 'behavior') === 'banned' ? '' : ' hidden') + '><div class="field"><label>المادّةُ الممنوعة</label><select id="f_item"><option value="">—</option>' + (st.bannedItems || []).map(function (x) { return '<option' + (ev.item === x ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select></div></div>'
         + '<div class="row2">' + perSel + teacher + '</div><div class="field"><label>الإجراءُ المتّخذ</label><select id="f_action"><option value="">—</option>' + (st.actions || []).map(function (x) { return '<option' + (ev.action === x ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select></div>';
-      else if (t === 'expel') body = '<div class="chips" id="f_ereason">' + (st.expelReasons || []).map(function (x) { return '<button type="button" data-v="' + esc(x.reason) + '" data-d="' + esc(x.days) + '" aria-pressed="' + ((ev.reason || '') === x.reason) + '">' + esc(x.reason) + ' (' + ar(x.days) + ')</button>'; }).join('') + '</div><div class="field"><label>عددُ أيّامِ الفصل</label><input id="f_days" type="number" min="1" max="7" value="' + esc(ev.days || 1) + '"></div><p class="hint">تُحدَّدُ المدّةُ تلقائياً من السببِ المختار، ويمكنُ تعديلُها يدوياً (يومٌ إلى أسبوع)</p>';
+      else if (t === 'expel') body = '<div class="chips" id="f_ereason">' + (st.expelReasons || []).map(function (x) { return '<button type="button" data-v="' + esc(x.reason) + '" data-d="' + esc(x.days) + '" aria-pressed="' + ((ev.reason || '') === x.reason) + '">' + esc(x.reason) + ' (' + ar(x.days) + ')</button>'; }).join('') + '</div><div class="field"><label>عددُ أيّامِ الفصل</label><input id="f_days" type="number" min="1" max="7" value="' + esc(ev.days || 1) + '"></div><p class="hint" id="f_epreview"></p>';
       else if (t === 'pledge') body = '<div class="field"><label>موضوعُ التعهّد</label><input id="f_kind" value="' + esc(ev.kind || '') + '" placeholder="مثال: عدمُ تكرارِ التأخير"></div><div class="field"><label>نصُّ التعهّد (فارغٌ = النصُّ الافتراضيُّ من الإعدادات)</label><textarea id="f_text">' + esc(ev.text || '') + '</textarea></div><label class="hint" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="f_guardian"' + (ev.guardian ? ' checked' : '') + '> حضرَ وليُّ الأمرِ ووقّع</label>';
       return '<div class="who"><span class="av">' + esc(initials(o.s.name)) + '</span><div><h3>' + esc(o.s.name) + '</h3><small>' + esc(o.c.name) + '</small></div></div>'
         + '<div class="chips" id="f_type">' + TYPES.map(function (x) { return '<button type="button" class="t-' + x.key + '" data-v="' + x.key + '" aria-pressed="' + (t === x.key) + '"' + (editing && x.key !== t ? ' disabled' : '') + '>' + x.short + '</button>'; }).join('') + '</div>'
@@ -384,7 +386,15 @@
     function bind() {
       $('sheet').querySelectorAll('#f_type button').forEach(function (b) { b.onclick = function () { ev.type = b.dataset.v; delete ev.sub; delete ev.reason; rerender(); }; });
       var sub = $('f_sub'); if (sub) sub.querySelectorAll('button').forEach(function (b) { b.onclick = function () { ev.sub = b.dataset.v; sub.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); var bn = $('f_banned'); if (bn) bn.hidden = ev.sub !== 'banned'; }; });
-      var ereason = $('f_ereason'); if (ereason) ereason.querySelectorAll('button').forEach(function (b) { b.onclick = function () { ev.reason = b.dataset.v; ereason.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); var di = $('f_days'); if (di) di.value = b.dataset.d || 1; }; });
+      var ereason = $('f_ereason'); if (ereason) ereason.querySelectorAll('button').forEach(function (b) { b.onclick = function () { ev.reason = b.dataset.v; ereason.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); var di = $('f_days'); if (di) di.value = b.dataset.d || 1; updateEPreview(); }; });
+      var epv = $('f_epreview');
+      function updateEPreview() {
+        if (!epv) return;
+        var fd = editing ? date : v('f_date'); if (!fd) { epv.textContent = ''; return; }
+        var from = nextSchoolDay(fd), n = Math.min(7, Math.max(1, +v('f_days') || 1)), to = addSchoolDays(from, n);
+        epv.textContent = 'يبدأُ الفصلُ الفعليُّ من أوّلِ يومِ دوامٍ بعد التسجيل: ' + fmtDate(from, true) + (to !== from ? ' — حتى ' + fmtDate(to, true) : '');
+      }
+      if (epv) { updateEPreview(); var fdt = $('f_date'), fdy = $('f_days'); if (fdt) fdt.onchange = updateEPreview; if (fdy) fdy.oninput = updateEPreview; }
       var f = $('f_from'), tt = $('f_to'), dd = $('f_days');
       if (f && tt) { var calc = function () { if (f.value && tt.value && tt.value >= f.value) dd.value = daysBetween(f.value, tt.value); }; f.onchange = function () { if (!tt.value || tt.value < f.value) tt.value = f.value; calc(); }; tt.onchange = calc; }
       var tm = $('f_time'); if (tm) tm.onchange = function () { $('f_min').value = Math.max(0, hm2m(tm.value) - hm2m(st.lateAfter)); };
@@ -403,7 +413,7 @@
       if (t === 'sick') { out.from = v('f_from'); out.to = v('f_to'); out.days = +v('f_days') || 1; out.src = v('f_src'); }
       if (t === 'sleep') { out.period = v('f_period'); out.teacher = v('f_teacher'); }
       if (t === 'viol') { out.sub = ev.sub || 'behavior'; out.item = out.sub === 'banned' ? v('f_item') : ''; out.period = v('f_period'); out.teacher = v('f_teacher'); out.action = v('f_action'); }
-      if (t === 'expel') { out.reason = ev.reason || ''; out.days = Math.min(7, Math.max(1, +v('f_days') || 1)); out.to = addDays(d, out.days - 1); }
+      if (t === 'expel') { out.reason = ev.reason || ''; out.days = Math.min(7, Math.max(1, +v('f_days') || 1)); out.from = nextSchoolDay(d); out.to = addSchoolDays(out.from, out.days); }
       if (t === 'pledge') { out.kind = v('f_kind'); out.text = v('f_text'); out.guardian = !!($('f_guardian') && $('f_guardian').checked); }
       if (t === 'absent' && !editing && dayEvents(d).some(function (x) { return x.sid === out.sid && x.type === 'absent'; })) { $('f_err').innerHTML = '<div class="err">الطالبُ مسجَّلٌ غائباً في هذا اليوم</div>'; return; }
       $('f_save').disabled = true;
