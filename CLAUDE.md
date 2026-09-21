@@ -9,5 +9,6 @@
 - الأمانُ في `firestore.rules` بالبريد؛ عند تغييرِ المشرف عدّلْ `ADMINS` في config.js **و** `esAdmin()` في القواعد، وذكّرِ المستخدمَ بنشرِ القواعدِ يدوياً من Firebase Console (لا يمكنُ نشرُها من هنا).
 - الاختبار: `python3 -m http.server 8790` من هذا المجلّد ثم `http://localhost:8790/index.html?demo=1` (بياناتٌ وهميّةٌ تُزرَعُ تلقائياً في localStorage). تحقّقْ من كونسول المتصفّحِ بلا أخطاء وجرّبِ الجوالَ (٣٧٥px).
 - بعد أيِّ تعديلٍ في الملفّات: ارفعْ `VERSION` في config.js و`?v=N` في index.html و`V` + `SHELL` في sw.js.
+- مشروعُ فايربيس: `eshraf-2d848` بحسابِ نايف `naifnaser95@gmail.com` (مستقلٌّ عن مشاريعِ حيدر). أيُّ بريدٍ يُضافُ إلى `ADMINS` يجبُ أن يُضافَ إلى `esAdmin()` في القواعدِ ويُنشَر.
 - النشر: `git push origin main` إلى `NaifNaser/eshraf` ← GitHub Pages ← `https://naifnaser.github.io/eshraf/`.
 - المهارةُ التفصيلية: `.claude/skills/eshraf-platform/SKILL.md`.

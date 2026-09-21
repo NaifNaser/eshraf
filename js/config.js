@@ -8,11 +8,12 @@
    ملاحظة: مفتاحُ الويب عامٌّ بطبيعته — الحمايةُ الحقيقيةُ في ملفِّ firestore.rules
    ═══════════════════════════════════════════════════════════════ */
 window.ESHRAF_CONFIG = {
-  PROJECT_ID: 'vak-quiz-96d5f',
-  API_KEY: 'AIzaSyADogtO8s6kDuTrs1Tup6J4acY47T5DmdM',
+  PROJECT_ID: 'eshraf-2d848',
+  API_KEY: 'AIzaSyDF2gZLl9TT8igRnZaE9s8Qz1o4aSoKiRs',
   ADMINS: ['naifnaser95@gmail.com', 'wahabfifa12@gmail.com'],
   SCHOOL: 'ثانوية طلحة بن عبيدالله. بنين - مدينة صباح الأحمد',
   SUPERVISOR: 'أ. نايف ناصر',
   PREFIX: 'es_',          /* بادئةُ مجموعاتِ فايرستور: es_meta · es_classes · es_days · es_log */
   VERSION: 4
 };
+
